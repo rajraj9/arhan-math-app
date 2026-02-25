@@ -1,0 +1,21 @@
+# Secrets — never commit
+.env
+
+# Progress data — lives on Railway volume, not in git
+progress.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store

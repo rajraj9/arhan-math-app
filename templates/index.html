@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arhan's Math Championship</title>
+  <style>
+    :root {
+      --navy:   #0f172a;
+      --card:   #1e293b;
+      --border: #334155;
+      --gold:   #f59e0b;
+      --gold-l: #fcd34d;
+      --green:  #22c55e;
+      --red:    #ef4444;
+      --blue:   #60a5fa;
+      --orange: #fb923c;
+      --text:   #f1f5f9;
+      --muted:  #94a3b8;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--navy);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ═══ HEADER ════════════════════════════════════════ */
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .hd-title { display: flex; align-items: center; gap: 12px; }
+    .hd-icon  { font-size: 1.9rem; line-height: 1; }
+    .hd-name  { font-size: 1.35rem; font-weight: 700; color: var(--gold); }
+    .hd-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    .level-pill {
+      background: linear-gradient(135deg, #854d0e, #d97706);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 7px 16px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* ═══ MAIN ═══════════════════════════════════════════ */
+    main { max-width: 760px; margin: 0 auto; padding: 28px 20px 0; }
+
+    .date-bar { text-align: center; margin-bottom: 22px; }
+    .date-bar .dt { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .date-bar .qt { font-size: 1.45rem; font-weight: 700; margin-top: 3px; }
+
+    /* ═══ STREAK HERO ════════════════════════════════════ */
+    .streak-hero {
+      background: linear-gradient(135deg, #1a1005 0%, #1e293b 100%);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+    }
+    .streak-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 0% 50%, rgba(249, 115, 22, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Left — flame + number */
+    .sh-left { display: flex; align-items: center; gap: 14px; }
+
+    .sh-flame {
+      font-size: 3.2rem;
+      line-height: 1;
+      display: inline-block;
+      animation: flamePulse 2.2s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    .sh-flame.cold { animation: none; filter: grayscale(1); opacity: 0.35; }
+
+    @keyframes flamePulse {
+      0%,100% { transform: scale(1) rotate(0deg); }
+      30%     { transform: scale(1.18) rotate(-4deg); }
+      60%     { transform: scale(1.1) rotate(3deg); }
+    }
+
+    .sh-num-wrap { line-height: 1; }
+    .sh-num {
+      font-size: 3.4rem;
+      font-weight: 800;
+      color: var(--orange);
+      display: inline-block;
+    }
+    .sh-num.pop { animation: popNum 0.55s cubic-bezier(.36,1.56,.64,1); }
+    @keyframes popNum {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.5); color: var(--gold-l); }
+      100% { transform: scale(1); }
+    }
+
+    .sh-unit {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--orange);
+      margin-left: 4px;
+    }
+    .sh-label { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+    /* Right — calendar + milestone */
+    .sh-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .milestone-row { display: flex; align-items: center; gap: 8px; }
+
+    .milestone-badge {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--gold-l);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    .milestone-next {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* 14-day calendar */
+    .streak-cal {
+      display: flex;
+      gap: 5px;
+      align-items: flex-end;
+    }
+    .day-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .day-lbl {
+      font-size: 0.58rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .day-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #263044;
+      border: 1.5px solid transparent;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .day-dot.done {
+      background: #ea580c;
+      border-color: #f97316;
+      box-shadow: 0 0 5px rgba(249, 115, 22, 0.45);
+    }
+    .day-dot.today-done {
+      background: var(--orange);
+      border: 2px solid var(--gold-l);
+      box-shadow: 0 0 10px rgba(252, 211, 77, 0.55);
+    }
+    .day-dot.today-pending {
+      background: transparent;
+      border: 2px dashed var(--gold);
+      animation: dashPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes dashPulse {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0.45; }
+    }
+
+    /* ═══ CELEBRATION TOAST ══════════════════════════════ */
+    #toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: linear-gradient(135deg, #c2410c, #ea580c);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.3rem;
+      padding: 16px 32px;
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(234, 88, 12, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1000;
+      transition: opacity 0.3s, transform 0.3s;
+      white-space: nowrap;
+      text-align: center;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ═══ LOADING ════════════════════════════════════════ */
+    #loading { text-align: center; padding: 70px 20px; }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 18px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .load-text { color: var(--muted); }
+    .load-sub  { color: var(--border); font-size: 0.8rem; margin-top: 5px; }
+
+    /* ═══ QUESTION CARDS ═════════════════════════════════ */
+    .q-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 18px;
+      transition: border-color 0.2s;
+    }
+    .q-card:focus-within { border-color: var(--gold); }
+
+    .q-hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .q-num {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--gold);
+    }
+    .q-topic {
+      font-size: 0.7rem;
+      background: rgba(96,165,250,.12);
+      color: var(--blue);
+      border: 1px solid rgba(96,165,250,.25);
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-weight: 600;
+    }
+    .q-text { font-size: 1.04rem; line-height: 1.65; margin-bottom: 18px; }
+
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    @media (max-width:480px) { .choices { grid-template-columns: 1fr; } }
+
+    .choice-label {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      font-size: 0.91rem;
+      user-select: none;
+    }
+    .choice-label:hover { background: rgba(255,255,255,.04); border-color: #64748b; }
+    .choice-label input[type="radio"] { display: none; }
+    .c-key {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--navy); border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .choice-label:has(input:checked) {
+      border-color: var(--gold);
+      background: rgba(245,158,11,.06);
+    }
+    .choice-label:has(input:checked) .c-key {
+      background: var(--gold); border-color: var(--gold); color: #000;
+    }
+
+    /* ═══ SUBMIT ═════════════════════════════════════════ */
+    .submit-area { text-align: center; margin-top: 28px; }
+    .btn {
+      padding: 13px 38px;
+      border-radius: 10px;
+      font-size: 1rem; font-weight: 700;
+      border: none; cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active  { transform: scale(.98); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-gold {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: #000; font-size: 1.04rem;
+    }
+    .btn-gold:not(:disabled):hover { opacity: .9; }
+    #answer-hint { margin-top: 9px; font-size: 0.78rem; color: var(--muted); }
+
+    /* ═══ RESULTS ════════════════════════════════════════ */
+    #results { display: none; }
+
+    .score-banner {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .score-big   { font-size: 4rem; font-weight: 800; color: var(--gold); line-height: 1; }
+    .score-lbl   { color: var(--muted); margin-top: 5px; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 1px; }
+    .score-msg   { font-size: 1.25rem; font-weight: 700; margin-top: 14px; }
+
+    .score-breakdown {
+      display: flex; align-items: center; justify-content: center;
+      gap: 20px; margin-top: 14px;
+    }
+    .sc-correct {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
+      color: var(--green); font-weight: 700; font-size: 1rem;
+      padding: 7px 18px; border-radius: 999px;
+    }
+    .sc-wrong {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
+      color: var(--red); font-weight: 700; font-size: 1rem;
+      padding: 7px 18px; border-radius: 999px;
+    }
+    .sc-num { font-size: 1.4rem; font-weight: 800; }
+
+    .practice-note {
+      margin-top: 14px;
+      background: rgba(96,165,250,.08);
+      border: 1px solid rgba(96,165,250,.2);
+      border-radius: 10px; padding: 10px 16px;
+      font-size: 0.83rem; color: #93c5fd; line-height: 1.5;
+      display: inline-block;
+    }
+    .practice-note strong { color: var(--blue); }
+
+    .lv-change   { margin-top: 12px; padding: 9px 18px; border-radius: 8px; font-weight: 700; font-size: 0.88rem; display: inline-block; }
+    .lv-change.up   { background: rgba(34,197,94,.12);  color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+    .lv-change.down { background: rgba(239,68,68,.1);   color: var(--red);   border: 1px solid rgba(239,68,68,.25); }
+
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .result-card.correct { border-left-color: var(--green); }
+    .result-card.wrong   { border-left-color: var(--red); }
+
+    .r-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .verdict { font-weight: 700; font-size: 0.88rem; }
+    .verdict.correct { color: var(--green); }
+    .verdict.wrong   { color: var(--red); }
+
+    .r-q-text { font-size: 0.99rem; line-height: 1.6; margin-bottom: 14px; }
+
+    .r-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 14px; }
+    @media (max-width:480px) { .r-choices { grid-template-columns: 1fr; } }
+
+    .r-choice {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 11px; border-radius: 8px;
+      font-size: 0.87rem; border: 1.5px solid transparent;
+    }
+    .r-key {
+      width: 23px; height: 23px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+      background: var(--navy); border: 1.5px solid var(--border);
+    }
+    .r-choice.is-correct              { background: rgba(34,197,94,.08);  border-color: rgba(34,197,94,.35); }
+    .r-choice.is-correct .r-key       { background: var(--green); border-color: var(--green); color: #000; }
+    .r-choice.is-wrong-pick           { background: rgba(239,68,68,.07);  border-color: rgba(239,68,68,.3); }
+    .r-choice.is-wrong-pick .r-key    { background: var(--red);   border-color: var(--red);   color: #fff; }
+
+    .sol-box {
+      background: rgba(15,23,42,.6); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px; margin-top: 2px;
+    }
+    .sol-lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--muted); margin-bottom: 7px; }
+    .sol-txt { font-size: 0.89rem; line-height: 1.7; color: #cbd5e1; white-space: pre-wrap; }
+
+    .method-box {
+      background: rgba(245,158,11,.05); border: 1px solid rgba(245,158,11,.2);
+      border-radius: 10px; padding: 13px 15px; margin-top: 9px;
+      display: flex; gap: 9px; align-items: flex-start;
+    }
+    .method-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .method-txt  { font-size: 0.87rem; line-height: 1.6; color: var(--gold-l); }
+
+    /* ═══ ERROR ══════════════════════════════════════════ */
+    #error-view { display:none; text-align:center; padding: 60px 20px; }
+
+    /* ═══ FOOTER ═════════════════════════════════════════ */
+    .footer-note { text-align:center; color:#334155; font-size:0.73rem; margin-top:44px; }
+  </style>
+</head>
+<body>
+
+<!-- ─ Header ──────────────────────────────────────────── -->
+<header>
+  <div class="hd-title">
+    <span class="hd-icon">🏆</span>
+    <div>
+      <div class="hd-name">Arhan's Math Championship</div>
+      <div class="hd-sub">AMC8 · Math Kangaroo · MOEMS · Noetic</div>
+    </div>
+  </div>
+  <div class="level-pill" id="level-pill">Level —</div>
+</header>
+
+<!-- ─ Toast celebration ───────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ─ Main ────────────────────────────────────────────── -->
+<main>
+  <div class="date-bar">
+    <div class="dt" id="date-display"></div>
+    <div class="qt">Daily Practice Quiz</div>
+  </div>
+
+  <!-- ─ STREAK HERO (always visible once loaded) ───── -->
+  <div class="streak-hero" id="streak-hero" style="display:none;">
+    <div class="sh-left">
+      <span class="sh-flame" id="sh-flame">🔥</span>
+      <div class="sh-num-wrap">
+        <div>
+          <span class="sh-num" id="sh-num">0</span>
+          <span class="sh-unit">Day</span>
+        </div>
+        <div class="sh-label">Streak</div>
+      </div>
+    </div>
+    <div class="sh-right">
+      <div class="milestone-row">
+        <div class="milestone-badge" id="ms-badge">🔥 Started!</div>
+      </div>
+      <div class="streak-cal" id="streak-cal"></div>
+      <div class="milestone-next" id="ms-next"></div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="load-text">Preparing today's problems...</div>
+    <div class="load-sub">Claude is crafting 3 questions just for you</div>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz" style="display:none;">
+    <form id="quiz-form">
+      <div id="q-container"></div>
+      <div class="submit-area">
+        <button type="submit" class="btn btn-gold" id="submit-btn" disabled>Submit Answers</button>
+        <div id="answer-hint">Answer all 3 questions to continue</div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results -->
+  <div id="results"></div>
+
+  <!-- Error -->
+  <div id="error-view">
+    <div style="font-size:2rem;margin-bottom:14px;">⚠️</div>
+    <div style="font-size:1.1rem;font-weight:600;" id="error-msg">Something went wrong.</div>
+    <div style="margin-top:9px;color:var(--muted);font-size:0.84rem;">
+      Check that your <code>ANTHROPIC_API_KEY</code> is set in a <code>.env</code> file and the server is running.
+    </div>
+    <button class="btn btn-gold" onclick="location.reload()" style="margin-top:22px;">Try Again</button>
+  </div>
+
+  <div class="footer-note">3 new problems every day · Powered by Claude</div>
+</main>
+
+<script>
+  // ── tiny utils ────────────────────────────────────────
+  const el   = id => document.getElementById(id);
+  const show = id => { el(id).style.display = ''; };
+  const hide = id => { el(id).style.display = 'none'; };
+
+  // ── date header ───────────────────────────────────────
+  el('date-display').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // ── state ─────────────────────────────────────────────
+  let currentQuestions = [];
+
+  // ── escape html ───────────────────────────────────────
+  function esc(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  // ── score label ───────────────────────────────────────
+  function scoreMsg(n) {
+    return ['🔁 Tough set today — review the solutions!',
+            '📚 Keep going — you got 1!',
+            '💪 Great job — 2 out of 3!',
+            '🎉 Perfect Score! Outstanding!'][n] || '';
+  }
+
+  /* ════════════════════════════════════════════════════
+     STREAK HERO
+  ════════════════════════════════════════════════════ */
+  function renderStreakHero(streak, streakDays, milestone, animate) {
+    // Big number
+    const numEl = el('sh-num');
+    numEl.textContent = streak;
+    if (animate) {
+      numEl.classList.remove('pop');
+      void numEl.offsetWidth;           // force reflow
+      numEl.classList.add('pop');
+    }
+
+    // Flame hot vs cold
+    el('sh-flame').className = 'sh-flame' + (streak === 0 ? ' cold' : '');
+
+    // Milestone badge
+    const badge = milestone.current_label
+      ? `${milestone.current_emoji} ${milestone.current_label}`
+      : '🔥 Keep going!';
+    el('ms-badge').textContent = badge;
+
+    // Next milestone hint
+    if (milestone.next_threshold) {
+      const left = milestone.next_threshold - streak;
+      el('ms-next').textContent =
+        `${left} more day${left !== 1 ? 's' : ''} to ${milestone.next_emoji} ${milestone.next_threshold}-day streak`;
+    } else {
+      el('ms-next').textContent = '🏆 You\'ve reached the top!';
+    }
+
+    // Calendar dots
+    const cal = el('streak-cal');
+    cal.innerHTML = '';
+    (streakDays || []).forEach(day => {
+      const col = document.createElement('div');
+      col.className = 'day-col';
+
+      const lbl = document.createElement('div');
+      lbl.className = 'day-lbl';
+      lbl.textContent = day.day_label;
+
+      const dot = document.createElement('div');
+      let cls = 'day-dot';
+      if (day.is_today) {
+        cls += day.completed ? ' today-done' : ' today-pending';
+      } else if (day.completed) {
+        cls += ' done';
+      }
+      dot.className = cls;
+      dot.title = day.date + (day.completed ? ' ✓' : '');
+
+      col.appendChild(lbl);
+      col.appendChild(dot);
+      cal.appendChild(col);
+    });
+
+    el('streak-hero').style.display = '';
+  }
+
+  // ── celebration toast ─────────────────────────────────
+  function showToast(msg) {
+    const t = el('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── update header level pill ──────────────────────────
+  function setLevelPill(level, name) {
+    el('level-pill').textContent = `Level ${level} · ${name}`;
+  }
+
+  /* ════════════════════════════════════════════════════
+     RENDER QUESTIONS
+  ════════════════════════════════════════════════════ */
+  function renderQuestions(questions) {
+    currentQuestions = questions;
+    const c = el('q-container');
+    c.innerHTML = '';
+
+    questions.forEach((q, i) => {
+      const card = document.createElement('div');
+      card.className = 'q-card';
+      const choices = Object.entries(q.choices).map(([k, v]) => `
+        <label class="choice-label">
+          <input type="radio" name="q${q.id}" value="${k}" />
+          <span class="c-key">${k}</span>
+          <span>${esc(v)}</span>
+        </label>`).join('');
+      card.innerHTML = `
+        <div class="q-hd">
+          <span class="q-num">Question ${i+1} of 3</span>
+          <span class="q-topic">${esc(q.topic)}</span>
+        </div>
+        <div class="q-text">${esc(q.question)}</div>
+        <div class="choices">${choices}</div>`;
+      card.querySelectorAll('input').forEach(r => r.addEventListener('change', trackAnswers));
+      c.appendChild(card);
+    });
+    trackAnswers();
+  }
+
+  function trackAnswers() {
+    let n = 0;
+    currentQuestions.forEach(q => {
+      if (document.querySelector(`input[name="q${q.id}"]:checked`)) n++;
+    });
+    el('submit-btn').disabled = (n < currentQuestions.length);
+    el('answer-hint').textContent = n === currentQuestions.length
+      ? 'Ready! Hit Submit to see solutions.'
+      : `Answer all 3 questions to continue (${n}/3 answered)`;
+  }
+
+  /* ════════════════════════════════════════════════════
+     RENDER RESULTS
+  ════════════════════════════════════════════════════ */
+  function renderResults(data) {
+    const { score, results, streak, level, level_name, level_up, level_down,
+            streak_days, milestone, streak_increased } = data;
+
+    // Update streak hero (with pop if streak went up)
+    renderStreakHero(streak, streak_days, milestone, streak_increased);
+
+    // Toast on streak increase
+    if (streak_increased) {
+      setTimeout(() => showToast(`🔥 ${streak}-day streak! Keep it up!`), 400);
+    }
+
+    let lvHTML = '';
+    if (level_up)   lvHTML = `<div class="lv-change up">⬆️ Leveled up to Level ${level}: ${level_name}!</div>`;
+    if (level_down) lvHTML = `<div class="lv-change down">↩️ Stepping to Level ${level} for more practice.</div>`;
+
+    const wrong = data.wrong ?? (3 - score);
+    const wrongTopics = data.wrong_topics || [];
+
+    let practiceHTML = '';
+    if (wrong > 0) {
+      const topicList = [...new Set(wrongTopics)].join(', ');
+      practiceHTML = `
+        <div class="practice-note">
+          📌 Tomorrow's quiz will include extra practice on <strong>${topicList}</strong>
+          to help reinforce these concepts.
+        </div>`;
+    }
+
+    let html = `
+      <div class="score-banner">
+        <div class="score-big">${score}/3</div>
+        <div class="score-lbl">Today's Score</div>
+        <div class="score-breakdown">
+          <div class="sc-correct"><span class="sc-num">${score}</span> ✓ correct</div>
+          <div class="sc-wrong"><span class="sc-num">${wrong}</span> ✗ wrong</div>
+        </div>
+        <div class="score-msg">${scoreMsg(score)}</div>
+        ${practiceHTML}
+        ${lvHTML}
+      </div>`;
+
+    results.forEach((r, i) => {
+      const choices = Object.entries(r.choices).map(([k, v]) => {
+        let cls = 'r-choice';
+        if (k === r.correct_answer)            cls += ' is-correct';
+        else if (k === r.user_answer && !r.is_correct) cls += ' is-wrong-pick';
+        return `<div class="${cls}"><span class="r-key">${k}</span><span>${esc(v)}</span></div>`;
+      }).join('');
+
+      const verdict = r.is_correct
+        ? `<span class="verdict correct">✓ Correct</span>`
+        : `<span class="verdict wrong">✗ You chose ${r.user_answer||'—'} · Answer: ${r.correct_answer}</span>`;
+
+      html += `
+        <div class="result-card ${r.is_correct?'correct':'wrong'}">
+          <div class="r-hd"><span class="q-num">Question ${i+1}</span>${verdict}</div>
+          <div class="r-q-text">${esc(r.question)}</div>
+          <div class="r-choices">${choices}</div>
+          <div class="sol-box">
+            <div class="sol-lbl">Solution</div>
+            <div class="sol-txt">${esc(r.solution)}</div>
+          </div>
+          <div class="method-box">
+            <span class="method-icon">💡</span>
+            <div class="method-txt">${esc(r.methodology)}</div>
+          </div>
+        </div>`;
+    });
+
+    el('results').innerHTML = html;
+    el('results').style.display = '';
+    setLevelPill(level, level_name);
+  }
+
+  /* ════════════════════════════════════════════════════
+     LOAD QUESTIONS
+  ════════════════════════════════════════════════════ */
+  async function loadQuestions() {
+    hide('error-view');
+    el('results').style.display = 'none';
+    show('loading');
+    hide('quiz');
+
+    try {
+      const res  = await fetch('/api/questions');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      hide('loading');
+      setLevelPill(data.level, data.level_name);
+      renderStreakHero(data.streak, data.streak_days, data.milestone, false);
+
+      if (data.answered) {
+        if (data.results) {
+          renderResults({ ...data, level_up: false, level_down: false, streak_increased: false });
+        } else {
+          el('results').innerHTML = `
+            <div style="text-align:center;padding:44px 20px;background:var(--card);
+                        border:1px solid var(--border);border-radius:var(--radius);">
+              <div style="font-size:2.5rem;margin-bottom:14px;">✅</div>
+              <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">All done for today!</div>
+              <div style="color:var(--muted);font-size:0.9rem;">
+                Score: <strong>${data.score ?? '?'}/3</strong> · Come back tomorrow for 3 new problems!
+              </div>
+            </div>`;
+          el('results').style.display = '';
+        }
+        return;
+      }
+
+      renderQuestions(data.questions);
+      show('quiz');
+
+    } catch (err) {
+      hide('loading');
+      el('error-msg').textContent = err.message || 'Could not load questions.';
+      show('error-view');
+    }
+  }
+
+  /* ════════════════════════════════════════════════════
+     SUBMIT
+  ════════════════════════════════════════════════════ */
+  el('quiz-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = el('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Checking answers...';
+
+    const answers = {};
+    currentQuestions.forEach(q => {
+      const c = document.querySelector(`input[name="q${q.id}"]:checked`);
+      if (c) answers[q.id] = c.value;
+    });
+
+    try {
+      const res  = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      hide('quiz');
+      renderResults(data);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Submit Answers';
+      alert('Error: ' + err.message);
+    }
+  });
+
+  // ── boot ──────────────────────────────────────────────
+  loadQuestions();
+</script>
+</body>
+</html>
