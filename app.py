@@ -1,5 +1,8 @@
 import os
 import json
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from datetime import date, timedelta
 from flask import Flask, jsonify, render_template, request
 from anthropic import Anthropic
@@ -201,6 +204,169 @@ def safe_questions(questions):
     ]
 
 
+# ── Email report ──────────────────────────────────────────
+
+def send_progress_email(score, results, streak, level, level_name, wrong_topics, history):
+    """Send a progress report email to the parent after each quiz."""
+    gmail_user     = os.environ.get("GMAIL_USER", "").strip()
+    gmail_password = os.environ.get("GMAIL_APP_PASSWORD", "").strip()
+    parent_email   = os.environ.get("PARENT_EMAIL", "").strip()
+
+    if not all([gmail_user, gmail_password, parent_email]):
+        return  # not configured — skip silently
+
+    # Support comma-separated list of recipient emails
+    recipients = [e.strip() for e in parent_email.split(",") if e.strip()]
+
+    today     = date.today().strftime("%A, %B %d %Y")
+    wrong     = 3 - score
+    streak_fire = "🔥" * min(streak, 5)
+
+    # Score colour
+    score_color = "#22c55e" if score == 3 else "#f59e0b" if score >= 2 else "#ef4444"
+
+    # Build per-question rows
+    q_rows = ""
+    for i, r in enumerate(results):
+        icon    = "✅" if r["is_correct"] else "❌"
+        verdict = "Correct" if r["is_correct"] else f"Wrong (you chose {r['user_answer']}, answer: {r['correct_answer']})"
+        v_color = "#22c55e" if r["is_correct"] else "#ef4444"
+        q_rows += f"""
+        <tr>
+          <td style="padding:10px 14px;border-bottom:1px solid #1e293b;color:#94a3b8;
+                     font-size:13px;white-space:nowrap;">Q{i+1} · {r.get('topic','')}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #1e293b;color:#f1f5f9;font-size:13px;">
+            {r['question'][:120]}{'…' if len(r['question'])>120 else ''}
+          </td>
+          <td style="padding:10px 14px;border-bottom:1px solid #1e293b;color:{v_color};
+                     font-size:13px;white-space:nowrap;">{icon} {verdict}</td>
+        </tr>"""
+
+    # Weak topics section
+    if wrong_topics:
+        topics_clean = list(dict.fromkeys(t for t in wrong_topics if t and t.strip()))
+        topics_html  = "".join(
+            f'<span style="background:#1e3a5f;color:#93c5fd;padding:4px 12px;border-radius:999px;'
+            f'font-size:13px;margin:3px;display:inline-block;">{t}</span>'
+            for t in topics_clean
+        )
+        weak_section = f"""
+        <div style="margin-top:20px;background:#0f172a;border:1px solid #1e3a5f;
+                    border-radius:10px;padding:16px 20px;">
+          <p style="margin:0 0 10px;color:#60a5fa;font-weight:700;font-size:13px;
+                    text-transform:uppercase;letter-spacing:1px;">📌 Focus areas for next time</p>
+          <div>{topics_html}</div>
+        </div>"""
+    else:
+        weak_section = ""
+
+    # Recent history mini-chart (last 7 sessions)
+    recent = history[-7:]
+    history_cells = ""
+    for h in recent:
+        s = h.get("score", 0)
+        c = "#22c55e" if s == 3 else "#f59e0b" if s >= 2 else "#ef4444"
+        history_cells += (
+            f'<td style="text-align:center;padding:6px 10px;">'
+            f'<div style="width:28px;height:28px;border-radius:50%;background:{c};'
+            f'color:#000;font-weight:800;font-size:12px;line-height:28px;margin:0 auto;">{s}</div>'
+            f'<div style="color:#64748b;font-size:10px;margin-top:3px;">'
+            f'{h.get("date","")[-5:]}</div></td>'
+        )
+    history_section = f"""
+        <div style="margin-top:20px;background:#0f172a;border:1px solid #1e293b;
+                    border-radius:10px;padding:16px 20px;">
+          <p style="margin:0 0 12px;color:#94a3b8;font-weight:700;font-size:13px;
+                    text-transform:uppercase;letter-spacing:1px;">📈 Recent sessions</p>
+          <table><tr>{history_cells}</tr></table>
+        </div>""" if recent else ""
+
+    subject = f"🧙‍♂️ Arhan practiced today — {score}/3 correct  {streak_fire} {streak}-day streak"
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#0f172a;font-family:'Segoe UI',Arial,sans-serif;">
+<div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1e293b,#0f172a);
+              border:1px solid #334155;border-radius:14px;padding:28px 28px 20px;
+              text-align:center;margin-bottom:20px;">
+    <div style="font-size:2.8rem;margin-bottom:8px;">🧙‍♂️</div>
+    <div style="color:#f59e0b;font-size:1.4rem;font-weight:800;">Arhan the Math Wizard</div>
+    <div style="color:#64748b;font-size:0.82rem;margin-top:4px;">{today}</div>
+  </div>
+
+  <!-- Score card -->
+  <div style="background:linear-gradient(135deg,#1e293b,#0f172a);
+              border:1px solid #334155;border-radius:14px;padding:28px;
+              text-align:center;margin-bottom:20px;">
+    <div style="font-size:4rem;font-weight:800;color:{score_color};line-height:1;">{score}/3</div>
+    <div style="color:#94a3b8;font-size:0.8rem;text-transform:uppercase;
+                letter-spacing:1px;margin-top:6px;">Today's Score</div>
+    <div style="display:inline-flex;gap:16px;margin-top:16px;">
+      <span style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
+                   color:#22c55e;font-weight:700;font-size:1rem;padding:7px 18px;
+                   border-radius:999px;">{score} ✓ correct</span>
+      <span style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);
+                   color:#ef4444;font-weight:700;font-size:1rem;padding:7px 18px;
+                   border-radius:999px;">{wrong} ✗ wrong</span>
+    </div>
+    <div style="margin-top:16px;color:#fb923c;font-size:1.1rem;font-weight:700;">
+      {streak_fire} {streak}-day streak · Level {level}: {level_name}
+    </div>
+  </div>
+
+  <!-- Question breakdown -->
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;
+              overflow:hidden;margin-bottom:20px;">
+    <div style="padding:14px 20px;border-bottom:1px solid #334155;">
+      <span style="color:#f59e0b;font-weight:700;font-size:0.85rem;
+                   text-transform:uppercase;letter-spacing:1px;">Question Breakdown</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0f172a;">
+          <th style="padding:8px 14px;color:#64748b;font-size:11px;text-align:left;
+                     text-transform:uppercase;letter-spacing:1px;">Topic</th>
+          <th style="padding:8px 14px;color:#64748b;font-size:11px;text-align:left;
+                     text-transform:uppercase;letter-spacing:1px;">Question</th>
+          <th style="padding:8px 14px;color:#64748b;font-size:11px;text-align:left;
+                     text-transform:uppercase;letter-spacing:1px;">Result</th>
+        </tr>
+      </thead>
+      <tbody>{q_rows}</tbody>
+    </table>
+  </div>
+
+  {weak_section}
+  {history_section}
+
+  <!-- Footer -->
+  <div style="text-align:center;color:#334155;font-size:0.72rem;margin-top:24px;">
+    Arhan the Math Wizard · Daily Practice · Powered by Claude
+  </div>
+
+</div>
+</body>
+</html>"""
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = f"Arhan the Math Wizard <{gmail_user}>"
+        msg["To"]      = ", ".join(recipients)
+        msg.attach(MIMEText(html_body, "html"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(gmail_user, gmail_password)
+            server.sendmail(gmail_user, recipients, msg.as_string())
+        print(f"Progress email sent to {recipients}")
+    except Exception as e:
+        print(f"Email send failed (non-fatal): {e}")
+
+
 # ── Routes ────────────────────────────────────────────────
 
 @app.route("/")
@@ -375,6 +541,20 @@ def submit_answers():
 
     new_streak = progress["streak"]
     wrong_topics = [r["topic"] for r in results if not r["is_correct"]]
+
+    # ── Email report to parents ─────────────────────────
+    try:
+        send_progress_email(
+            score=score,
+            results=results,
+            streak=new_streak,
+            level=progress["level"],
+            level_name=LEVEL_NAMES[progress["level"]],
+            wrong_topics=wrong_topics,
+            history=progress.get("history", []),
+        )
+    except Exception as e:
+        print(f"Email report error (non-fatal): {e}")
 
     return jsonify({
         "score": score,
