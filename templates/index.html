@@ -688,12 +688,19 @@
 
     let practiceHTML = '';
     if (wrong > 0) {
-      const topicList = [...new Set(wrongTopics)].join(', ');
-      practiceHTML = `
-        <div class="practice-note">
-          📌 Tomorrow's quiz will include extra practice on <strong>${topicList}</strong>
-          to help reinforce these concepts.
-        </div>`;
+      const topics = [...new Set(wrongTopics.filter(t => t && t.trim()))];
+      if (topics.length > 0) {
+        practiceHTML = `
+          <div class="practice-note">
+            📌 Tomorrow's quiz will include extra practice on <strong>${topics.join(', ')}</strong>
+            to help reinforce these concepts.
+          </div>`;
+      } else {
+        practiceHTML = `
+          <div class="practice-note">
+            📌 Tomorrow's quiz will revisit the concepts you missed today.
+          </div>`;
+      }
     }
 
     let html = `
@@ -707,6 +714,10 @@
         <div class="score-msg">${scoreMsg(score)}</div>
         ${practiceHTML}
         ${lvHTML}
+        <button type="button" class="btn-reset" id="results-reset-btn"
+          style="margin: 18px auto 0; display:flex; justify-content:center;">
+          🔄 Try New Questions
+        </button>
       </div>`;
 
     results.forEach((r, i) => {
@@ -825,7 +836,7 @@
     }
   });
 
-  // ── reset button ──────────────────────────────────────
+  // ── reset button (on quiz page, before submitting) ────
   el('reset-btn').addEventListener('click', async () => {
     if (!confirm('Get a brand new set of questions? Your streak won\'t be affected.')) return;
     el('reset-btn').textContent = '⏳ Resetting...';
@@ -833,6 +844,19 @@
     try {
       await fetch('/api/reset', { method: 'POST' });
     } catch (_) {}
+    loadQuestions();
+  });
+
+  // ── reset button (on results page, after submitting) ──
+  el('results').addEventListener('click', async e => {
+    if (e.target.id !== 'results-reset-btn') return;
+    if (!confirm('Get a brand new set of questions? Your streak won\'t be affected.')) return;
+    e.target.textContent = '⏳ Resetting...';
+    e.target.disabled = true;
+    try {
+      await fetch('/api/reset', { method: 'POST' });
+    } catch (_) {}
+    el('results').style.display = 'none';
     loadQuestions();
   });
 
