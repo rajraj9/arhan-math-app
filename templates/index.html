@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arhan's Math Championship</title>
+  <title>Arhan the Math Wizard</title>
   <style>
     :root {
       --navy:   #0f172a;
@@ -430,9 +430,9 @@
 <!-- ─ Header ──────────────────────────────────────────── -->
 <header>
   <div class="hd-title">
-    <span class="hd-icon">🏆</span>
+    <span class="hd-icon">🧙‍♂️</span>
     <div>
-      <div class="hd-name">Arhan's Math Championship</div>
+      <div class="hd-name">Arhan the Math Wizard</div>
       <div class="hd-sub">AMC8 · Math Kangaroo · MOEMS · Noetic</div>
     </div>
   </div>
@@ -721,7 +721,7 @@
     });
 
     el('results').innerHTML = html;
-    el('results').style.display = '';
+    el('results').style.display = 'block';
     setLevelPill(level, level_name);
   }
 
@@ -757,7 +757,7 @@
                 Score: <strong>${data.score ?? '?'}/3</strong> · Come back tomorrow for 3 new problems!
               </div>
             </div>`;
-          el('results').style.display = '';
+          el('results').style.display = 'block';
         }
         return;
       }
