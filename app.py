@@ -585,10 +585,19 @@ def test_email():
     gmail_password = os.environ.get("GMAIL_APP_PASSWORD", "")
     parent_email   = os.environ.get("PARENT_EMAIL", "")
 
+    # Show length + first char hint to diagnose empty vs missing
+    def var_status(val, name):
+        if val is None:
+            return f"❌ NOT IN ENVIRONMENT"
+        if val == "":
+            return f"❌ SET BUT EMPTY (length=0)"
+        return f"✅ set (length={len(val)}, starts with '{val[0]}')"
+
     config_status = {
-        "GMAIL_USER":        "✅ set" if gmail_user     else "❌ MISSING",
-        "GMAIL_APP_PASSWORD":"✅ set" if gmail_password else "❌ MISSING",
-        "PARENT_EMAIL":      "✅ set" if parent_email   else "❌ MISSING",
+        "GMAIL_USER":         var_status(os.environ.get("GMAIL_USER"),         "GMAIL_USER"),
+        "GMAIL_APP_PASSWORD": var_status(os.environ.get("GMAIL_APP_PASSWORD"), "GMAIL_APP_PASSWORD"),
+        "PARENT_EMAIL":       var_status(os.environ.get("PARENT_EMAIL"),       "PARENT_EMAIL"),
+        "all_env_keys_with_G": [k for k in os.environ if k.startswith("G")],
     }
 
     if not all([gmail_user, gmail_password, parent_email]):
