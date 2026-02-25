@@ -319,6 +319,20 @@
     .btn-gold:not(:disabled):hover { opacity: .9; }
     #answer-hint { margin-top: 9px; font-size: 0.78rem; color: var(--muted); }
 
+    .btn-reset {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      font-size: 0.78rem;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .btn-reset:hover { border-color: var(--red); color: var(--red); }
+    .reset-row { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+
     /* ═══ RESULTS ════════════════════════════════════════ */
     #results { display: none; }
 
@@ -479,6 +493,9 @@
 
   <!-- Quiz -->
   <div id="quiz" style="display:none;">
+    <div class="reset-row">
+      <button type="button" class="btn-reset" id="reset-btn">🔄 New Questions</button>
+    </div>
     <form id="quiz-form">
       <div id="q-container"></div>
       <div class="submit-area">
@@ -806,6 +823,17 @@
       btn.textContent = 'Submit Answers';
       alert('Error: ' + err.message);
     }
+  });
+
+  // ── reset button ──────────────────────────────────────
+  el('reset-btn').addEventListener('click', async () => {
+    if (!confirm('Get a brand new set of questions? Your streak won\'t be affected.')) return;
+    el('reset-btn').textContent = '⏳ Resetting...';
+    el('reset-btn').disabled = true;
+    try {
+      await fetch('/api/reset', { method: 'POST' });
+    } catch (_) {}
+    loadQuestions();
   });
 
   // ── boot ──────────────────────────────────────────────

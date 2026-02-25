@@ -395,6 +395,17 @@ def submit_answers():
     })
 
 
+@app.route("/api/reset", methods=["POST"])
+def reset_today():
+    """Clear today's cache so fresh questions are generated on next load."""
+    progress = load_progress()
+    today = str(date.today())
+    if today in progress.get("daily_cache", {}):
+        del progress["daily_cache"][today]
+    save_progress(progress)
+    return jsonify({"ok": True})
+
+
 @app.route("/api/history")
 def get_history():
     progress = load_progress()
