@@ -363,8 +363,11 @@ def send_progress_email(score, results, streak, level, level_name, wrong_topics,
             server.login(gmail_user, gmail_password)
             server.sendmail(gmail_user, recipients, msg.as_string())
         print(f"Progress email sent to {recipients}")
+        return None  # success
     except Exception as e:
-        print(f"Email send failed (non-fatal): {e}")
+        err = str(e)
+        print(f"Email send failed (non-fatal): {err}")
+        return err  # return error string for debugging
 
 
 # ── Routes ────────────────────────────────────────────────
@@ -573,6 +576,44 @@ def submit_answers():
         "milestone": milestone_for(new_streak),
         "streak_increased": new_streak > old_streak,
     })
+
+
+@app.route("/api/test-email")
+def test_email():
+    """Debug endpoint — tests email config and returns result."""
+    gmail_user     = os.environ.get("GMAIL_USER", "")
+    gmail_password = os.environ.get("GMAIL_APP_PASSWORD", "")
+    parent_email   = os.environ.get("PARENT_EMAIL", "")
+
+    config_status = {
+        "GMAIL_USER":        "✅ set" if gmail_user     else "❌ MISSING",
+        "GMAIL_APP_PASSWORD":"✅ set" if gmail_password else "❌ MISSING",
+        "PARENT_EMAIL":      "✅ set" if parent_email   else "❌ MISSING",
+    }
+
+    if not all([gmail_user, gmail_password, parent_email]):
+        return jsonify({"status": "error", "config": config_status,
+                        "message": "One or more environment variables are missing."})
+
+    # Send a real test email
+    fake_results = [
+        {"id": 1, "topic": "Number Theory", "question": "Test question 1",
+         "user_answer": "A", "correct_answer": "A", "is_correct": True,
+         "solution": "test", "methodology": "test"},
+        {"id": 2, "topic": "Geometry", "question": "Test question 2",
+         "user_answer": "B", "correct_answer": "C", "is_correct": False,
+         "solution": "test", "methodology": "test"},
+    ]
+    error = send_progress_email(
+        score=1, results=fake_results, streak=3,
+        level=2, level_name="Problem Solver",
+        wrong_topics=["Geometry"], history=[]
+    )
+
+    if error:
+        return jsonify({"status": "error", "config": config_status, "error": error})
+    return jsonify({"status": "✅ Email sent successfully!", "config": config_status,
+                    "sent_to": parent_email})
 
 
 @app.route("/api/reset", methods=["POST"])
